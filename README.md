@@ -1,2 +1,2 @@
 # ClassicCAN
- OBD II display in a classics Smiths style gauge.
+ OBD II display in a classic 2" Smiths Instruments gauge.
