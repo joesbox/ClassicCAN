@@ -1,5 +1,14 @@
+ 
+[![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://github.com/joesbox/ClassicCAN/blob/main/LICENSE)
+[![Build Status](https://img.shields.io/travis/joesbox/ClassicCAN)](https://travis-ci.com/github/joesbox/ClassicCAN)
+![GitHub last commit](https://img.shields.io/github/last-commit/joesbox/ClassicCAN)
+
 # ClassicCAN
-OBD II display using a Teensy 4.0 and a circular Waveshare 1.28" OLED LCD (https://www.waveshare.com/1.28inch-lcd-module.htm) which fits neatly inside a classic 2" Smiths Instruments gauge.
+
+OBD II display inside a classic Smiths Instrument enclosure.
+
+## Documentation
+Documentation can be found at https://wiki.joeblogs.co
 
 ## Features
 * CAN interface to read standard OBD II data
