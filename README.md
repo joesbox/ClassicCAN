@@ -1,4 +1,3 @@
- 
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://github.com/joesbox/ClassicCAN/blob/main/LICENSE)
 [![Build Status](https://img.shields.io/travis/joesbox/ClassicCAN)](https://travis-ci.com/github/joesbox/ClassicCAN)
 ![GitHub last commit](https://img.shields.io/github/last-commit/joesbox/ClassicCAN)
