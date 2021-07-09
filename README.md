@@ -1,5 +1,4 @@
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://github.com/joesbox/ClassicCAN/blob/main/LICENSE)
-[![Build Status](https://img.shields.io/travis/joesbox/ClassicCAN)](https://travis-ci.com/github/joesbox/ClassicCAN)
 ![GitHub last commit](https://img.shields.io/github/last-commit/joesbox/ClassicCAN)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/7f45a92eab684f5caa4304f4b9256467)](https://www.codacy.com/gh/joesbox/ClassicCAN/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=joesbox/ClassicCAN&amp;utm_campaign=Badge_Grade)
 
