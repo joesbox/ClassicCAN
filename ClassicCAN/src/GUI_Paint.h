@@ -103,9 +103,13 @@ typedef enum {
 #define LGRAY         0xA534 
 #define LGRAYBLUE     0XA651
 #define LBBLUE        0X2B12 
-#define MBLUE         0x03BE
-#define DMBLUE        0x01F0
+#define BLUE          0x03BE
+#define DBLUE         0x01F0
 #define DGREEN2       0x0441
+#define DPURPLE       0x400E
+#define PURPLE        0x7A34
+#define DMBLUE        0x02EC
+#define MBLUE         0x5492
 
 
 #define IMAGE_BACKGROUND    WHITE

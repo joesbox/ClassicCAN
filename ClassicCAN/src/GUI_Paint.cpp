@@ -759,27 +759,20 @@ function:	Display float number
 parameter:
     Xstart           : X coordinate
     Ystart           : Y coordinate
-    Nummber          : The float data that you want to display
-	Decimal_Point	 : Show decimal places
+    Number           : The float data that you want to display
+	  Precision  	     : Number of characters to print
     Font             : The structure pointer that displays a character size
     Color            : Select the background color of the English character
 ******************************************************************************/
-void Paint_DrawFloatNum(UWORD Xpoint, UWORD Ypoint, double Nummber, UBYTE Decimal_Point,
+void Paint_DrawFloatNum(UWORD Xpoint, UWORD Ypoint, double Nummber, UBYTE Precision,
                         sFONT *Font, UWORD Color_Background, UWORD Color_Foreground)
 {
-  char Str[ARRAY_LEN] = {0};
-  dtostrf(Nummber, 0, Decimal_Point + 2, Str);
-  char *pStr = (char *)malloc((strlen(Str)) * sizeof(char));
-  memcpy(pStr, Str, (strlen(Str) - 2));
-  *(pStr + strlen(Str) - 1) = '\0';
-  if ((*(pStr + strlen(Str) - 3)) == '.')
-  {
-    *(pStr + strlen(Str) - 3) = '\0';
-  }
+  //Convert to char array
+  char outstr[15];
+  dtostrf(Nummber, Precision, 1, outstr);
+  
   //show
-  Paint_DrawString_EN(Xpoint, Ypoint, (const char *)pStr, Font, Color_Foreground, Color_Background);
-  free(pStr);
-  pStr = NULL;
+  Paint_DrawString_EN(Xpoint, Ypoint, (const char *)outstr, Font, Color_Background, Color_Foreground);
 }
 
 /******************************************************************************
