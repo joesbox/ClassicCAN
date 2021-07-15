@@ -1,5 +1,13 @@
 {
     "files.associations": {
-        "string": "cpp"
+        "string": "cpp",
+        "*.tpp": "cpp",
+        "array": "cpp",
+        "deque": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "initializer_list": "cpp",
+        "*.tcc": "cpp",
+        "random": "cpp"
     }
 }

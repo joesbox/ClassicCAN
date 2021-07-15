@@ -8,7 +8,6 @@
     2021-07-04        v1.0.0        Initial release
 */
 
-#include <CAN.h>
 #include <OBD2.h>
 #include <elapsedMillis.h>
 #include <TimeLib.h>
@@ -27,16 +26,13 @@ const int display_centre_y = 120; /* LCD centre Y co-ordinate */
 
 bool OBDconnected = false; /* OBD connection flag */
 
-elapsedMillis updateTimer;  /* Update timer */
-uint32_t updateInt = 60000; /* Update timer interval */
-
 int oilPressure, oilTemp, waterTemp, RPM, maniPress, ignAdv; /* Integer OBD values */
 int prevVal, currentVal;                                     /* Integer value storage */
 
-double afr1, afr2;            /* Floating point OBD values */
-double fPrevVal, fCurrentVal; /* Floating point value storage */
+float afr1, afr2;            /* Floating point OBD values */
+float fPrevVal, fCurrentVal; /* Floating point value storage */
 
-bool doubleVal;
+bool floatVal; /* Flag to denote floating point variable */
 
 int xPos;        /* Starting position for display value */
 int lcdBL = 255; /* LCD backlight level */
@@ -44,10 +40,11 @@ int lcdBL = 255; /* LCD backlight level */
 PAINT_TIME currentTime; /* Current time object */
 
 // Clock drawing variables
-int clock_x;  /* Clock X co-ordinate */
-int clock_y;  /* Clock Y co-ordinate */
-int clock_x1; /* Clock X1 co-ordinate */
-int clock_y1; /* Clock Y1 co-ordinate */
+int clock_x;     /* Clock X co-ordinate */
+int clock_y;     /* Clock Y co-ordinate */
+int clock_x1;    /* Clock X1 co-ordinate */
+int clock_y1;    /* Clock Y1 co-ordinate */
+int cmin, chour; /* Current minute, current hour */
 
 enum Displays : byte
 {
@@ -92,6 +89,8 @@ void setup()
     ;
   Serial.println("\n" __FILE__ " " __DATE__ " " __TIME__);
   setSyncProvider(getTeensy3Time);
+
+  cmin = -1;
 
   // Initialise LCD
   LCD_Init();
@@ -216,7 +215,6 @@ void drawGFX()
 
   case clock:
     LCD_Clear(BLACK);
-    updateInt = 0;
     break;
 
   case o2bank1:
@@ -260,63 +258,62 @@ void updateGFX()
   switch (currentDisplay)
   {
   case oilpressure:
-    doubleVal = false;
+    floatVal = false;
     currentVal = oilPressure;
     break;
 
   case oiltemp:
-    doubleVal = false;
+    floatVal = false;
     currentVal = oilTemp;
     break;
 
   case watertemp:
-    doubleVal = false;
+    floatVal = false;
     currentVal = waterTemp;
     break;
 
   case rpm:
-    doubleVal = false;
+    floatVal = false;
     currentVal = RPM;
     break;
 
   case manipressure:
-    doubleVal = false;
+    floatVal = false;
     currentVal = maniPress;
     break;
 
   case ignadv:
-    doubleVal = false;
+    floatVal = false;
     currentVal = ignAdv;
     break;
 
   case clock:
-    if (updateTimer > updateInt)
+    if (cmin != currentTime.Min)
     {
       LCD_Clear(BLACK);
-      int hour = currentTime.Hour;
-      int min = currentTime.Min;
-      draw_hour(hour, min);
-      draw_minute(min);
+      chour = currentTime.Hour;
+      cmin = currentTime.Min;
+      draw_hour(chour, cmin);
+      draw_minute(cmin);
       draw_clock_face();
-      updateInt = 60000;
-      updateTimer = 0;
     }
     break;
 
   case o2bank1:
-    doubleVal = true;
+    floatVal = true;
     fCurrentVal = afr1;
     break;
 
   case o2bank2:
-    doubleVal = true;
+    floatVal = true;
     fCurrentVal = afr2;
     break;
   }
 
   if (currentDisplay != clock)
   {
-    if (!doubleVal)
+    cmin = -1; // Force re-draw when returning to clock display
+    if (!floatVal)
     {
       xPos = 99;
       if (currentVal > 9)
