@@ -64,6 +64,14 @@ Displays currentDisplay;
 #define BUTTON_PIN 4
 Bounce2::Button button = Bounce2::Button();
 
+// Functions
+void drawGFX();
+void updateGFX();
+time_t getTeensy3Time();
+void draw_hour(int hour, int minute);
+void draw_minute(int minute);
+void draw_clock_face();
+
 Displays &operator++(Displays &d); /* Override ++ operator to cycle through displays */
 
 void setup()
