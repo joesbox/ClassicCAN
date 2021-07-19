@@ -10,7 +10,7 @@ OBD II display inside a classic Smiths Instrument enclosure.
 Documentation can be found at https://wiki.joeblogs.co
 
 ## Features
-*		CAN interface to read standard OBD II data
+*   CAN interface to read standard OBD II data
 * 	Directly mounts inside a standard 2" Smiths Instrument gauge
 * 	Bluetooth interface
 * 	Capacitive touch interface
