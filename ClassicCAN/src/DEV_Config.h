@@ -49,8 +49,8 @@
 **/
 #define DEV_CS_PIN  10
 #define DEV_DC_PIN  7
-#define DEV_RST_PIN 8
-#define DEV_BL_PIN  9
+#define DEV_RST_PIN 6
+#define DEV_BL_PIN  5
 
 
 /**

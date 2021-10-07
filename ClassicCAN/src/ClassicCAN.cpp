@@ -5,10 +5,10 @@
     © 2021 Joe Mann. https://wiki.joeblogs.co
 
     Version history:
+    2021-10-07        v1.0.1        Removed unused libraries. Updated CAN comms + display tweaks
     2021-07-04        v1.0.0        Initial release
 */
 
-#include <OBD2.h>
 #include <elapsedMillis.h>
 #include <TimeLib.h>
 #include <font_Arial.h>
@@ -18,13 +18,32 @@
 #include "image.h"
 #include <EEPROM.h>
 #include <Bounce2.h>
+#include <FlexCAN_T4.h>
 
 // Constants
 const double pi = 3.14159267;     /* Pi constant */
 const int display_centre_x = 120; /* LCD centre X co-ordinate */
 const int display_centre_y = 120; /* LCD centre Y co-ordinate */
 
-bool OBDconnected = false; /* OBD connection flag */
+// CAN bus
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can0;
+const long loopDelay1 = 50; /* Make a request every 50ms */
+unsigned long timeNow1 = 0;
+bool OBDconnected = true; /* OBD connection flag */
+
+// ECU CAN address
+#define ECU_ADDR 0x700;
+
+// OBD PIDs
+const uint8_t COOLANT_TEMP = 0x05;
+const uint8_t MANIFOLD_PRESSURE = 0x0B;
+const uint8_t ENGINE_SPEED = 0x0C;
+const uint8_t TIMING_ADV = 0x0E;
+const uint8_t INTAKE_AIR_TEMP = 0x0F;
+const uint8_t O2_BANK1 = 0x24;
+const uint8_t O2_BANK2 = 0x25;
+const uint8_t ECU_VOLTAGE = 0x42;
+const uint8_t OIL_TEMP = 0x5C;
 
 int oilPressure, oilTemp, waterTemp, RPM, maniPress, ignAdv; /* Integer OBD values */
 int prevVal, currentVal;                                     /* Integer value storage */
@@ -71,16 +90,23 @@ time_t getTeensy3Time();
 void draw_hour(int hour, int minute);
 void draw_minute(int minute);
 void draw_clock_face();
+void canSniff(const CAN_message_t &msg);
+void canTx_OBD(uint8_t pid);
 
 Displays &operator++(Displays &d); /* Override ++ operator to cycle through displays */
 
 void setup()
 {
+  Serial.begin(9600);
+  delay(100);
+
   // Start OBD connection
-  if (OBD2.begin())
-  {
-    OBDconnected = true;
-  }
+  Can0.begin();
+  Can0.setBaudRate(500000);
+  Can0.setMaxMB(16);
+  Can0.enableFIFO();
+  Can0.enableFIFOInterrupt();
+  Can0.onReceive(canSniff);
 
   // Read the last used display
   currentDisplay = (Displays)EEPROM.read(0);
@@ -107,6 +133,8 @@ void setup()
 
   // Draw graphics
   drawGFX();
+
+  Serial.println(currentDisplay);
 }
 
 void loop()
@@ -119,13 +147,16 @@ void loop()
   currentTime.Min = minute();
   currentTime.Sec = second();
 
+  // Update CAN data
+  Can0.events();
+
   button.update();
 
   if (button.pressed())
   {
     currentDisplay = ++currentDisplay;
     drawGFX();
-  }
+  };
 
   updateGFX();
 }
@@ -271,26 +302,52 @@ void updateGFX()
     break;
 
   case oiltemp:
+    if (millis() > timeNow1 + loopDelay1)
+    {
+      timeNow1 = millis();
+      canTx_OBD(OIL_TEMP);
+    }
+
     floatVal = false;
     currentVal = oilTemp;
     break;
 
   case watertemp:
+    if (millis() > timeNow1 + loopDelay1)
+    {
+      timeNow1 = millis();
+      canTx_OBD(COOLANT_TEMP);
+    }
     floatVal = false;
     currentVal = waterTemp;
     break;
 
   case rpm:
+    if (millis() > timeNow1 + loopDelay1)
+    {
+      timeNow1 = millis();
+      canTx_OBD(ENGINE_SPEED);
+    }
     floatVal = false;
     currentVal = RPM;
     break;
 
   case manipressure:
+    if (millis() > timeNow1 + loopDelay1)
+    {
+      timeNow1 = millis();
+      canTx_OBD(MANIFOLD_PRESSURE);
+    }
     floatVal = false;
     currentVal = maniPress;
     break;
 
   case ignadv:
+    if (millis() > timeNow1 + loopDelay1)
+    {
+      timeNow1 = millis();
+      canTx_OBD(TIMING_ADV);
+    }
     floatVal = false;
     currentVal = ignAdv;
     break;
@@ -308,11 +365,13 @@ void updateGFX()
     break;
 
   case o2bank1:
+    canTx_OBD(O2_BANK1);
     floatVal = true;
     fCurrentVal = afr1;
     break;
 
   case o2bank2:
+    canTx_OBD(O2_BANK2);
     floatVal = true;
     fCurrentVal = afr2;
     break;
@@ -324,24 +383,26 @@ void updateGFX()
     if (!floatVal)
     {
       xPos = 99;
-      if (currentVal > 9)
+      if (currentVal > 9 || currentVal < 0)
       {
         xPos = 78;
       }
-      if (currentVal > 99)
+      if (currentVal > 99 || currentVal < -10)
       {
         xPos = 57;
       }
-      if (currentVal > 999)
+      if (currentVal > 999 || currentVal < -100)
       {
         xPos = 36;
       }
-      if ((prevVal > 999 && currentVal < 1000) || (prevVal > 99 && currentVal < 100) || (prevVal > 9 && currentVal < 10))
+      if ((prevVal > 999 && abs(currentVal) < 1000) || (prevVal > 99 && abs(currentVal) < 100) || (prevVal > 9 && abs(currentVal) < 10))
       {
         LCD_ClearWindow(0, 34, 240, 110, BLACK);
       }
-      Paint_DrawNum(xPos, 34, currentVal, &FontPTMono70, BLACK, WHITE);
-      prevVal = currentVal;
+      String s = String(currentVal);
+      const char *print = s.c_str();
+      Paint_DrawString_EN(xPos, 34, print, &FontPTMono70, BLACK, WHITE);
+      prevVal = abs(currentVal);
     }
     else
     {
@@ -432,4 +493,47 @@ void draw_clock_face()
 Displays &operator++(Displays &d)
 {
   return d = (d == Displays::o2bank2) ? Displays::oilpressure : static_cast<Displays>(static_cast<byte>(d) + 1);
+}
+
+void canSniff(const CAN_message_t &msg)
+{
+  // Global callback to catch any CAN frame coming in
+  switch (msg.buf[2])
+  {
+  case OIL_TEMP:
+    oilTemp = msg.buf[3] - 40;
+    break;
+  case COOLANT_TEMP:
+    waterTemp = msg.buf[3] - 40;
+    break;
+  case ENGINE_SPEED:
+    RPM = ((256 * msg.buf[3]) + msg.buf[4]) * 4;
+    break;
+  case MANIFOLD_PRESSURE:
+    maniPress = msg.buf[3];
+    Serial.println(maniPress);
+    break;
+  case TIMING_ADV:
+    ignAdv = (msg.buf[3] / 2) - 64;
+    Serial.println(ignAdv);
+    break;
+  }
+}
+
+void canTx_OBD(uint8_t pid)
+{ // Request function to ask for Engine Coolant Temp via OBD request
+  CAN_message_t msgTx, msgRx;
+  msgTx.buf[0] = 0x02;
+  msgTx.buf[1] = 0x01;
+  msgTx.buf[2] = pid;
+  msgTx.buf[3] = 0;
+  msgTx.buf[4] = 0;
+  msgTx.buf[5] = 0;
+  msgTx.buf[6] = 0;
+  msgTx.buf[7] = 0;
+  msgTx.len = 8;            // number of bytes in request
+  msgTx.flags.extended = 0; // 11 bit header, not 29 bit
+  msgTx.flags.remote = 0;
+  msgTx.id = ECU_ADDR; // request header for OBD
+  Can0.write(msgTx);
 }
