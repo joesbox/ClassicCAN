@@ -7,7 +7,7 @@
 OBD II display inside a classic Smiths Instrument enclosure.
 
 ## Documentation
-Documentation can be found at https://wiki.joeblogs.co
+Documentation can be found at https://wiki.joeblogs.uk
 
 ## Features
 *   CAN interface to read standard OBD II data
